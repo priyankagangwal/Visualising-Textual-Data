@@ -1,0 +1,549 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Analysing Qualitative or Text Data
+# 
+
+# ### Women's E-commerce Clothing Reviews
+
+# Clothing ID: Integer Categorical variable that refers to the specific piece being reviewed.
+# 
+# Age: Positive Integer variable of the reviewers age.
+# 
+# Title: String variable for the title of the review.
+# 
+# Review Text: String variable for the review body.
+# 
+# Rating: Positive Ordinal Integer variable for the product score granted by the customer from 1 Worst, to 5 Best.
+# 
+# Recommended IND: Binary variable stating where the customer recommends the product where 1 is recommended, 0 is not recommended.
+# 
+# Positive Feedback Count: Positive Integer documenting the number of other customers who found this review positive.
+# 
+# Division Name: Categorical name of the product high level division.
+# 
+# Department Name: Categorical name of the product department name.
+# 
+# Class Name: Categorical name of the product class name.
+
+# In[77]:
+
+
+# !pip install plotly
+# !pip install cufflinks
+# !pip install textblob
+
+
+# In[78]:
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+get_ipython().run_line_magic('matplotlib', 'inline')
+
+
+# In[79]:
+
+
+import plotly as py
+import cufflinks as cf
+
+
+# In[80]:
+
+
+from plotly.offline import iplot
+
+
+# In[81]:
+
+
+py.offline.init_notebook_mode(connected=True)
+cf.go_offline()
+
+
+# ## Data Import
+
+# In[82]:
+
+
+df = pd.read_csv('Womens Clothing E-Commerce Reviews.csv', index_col=0)
+df.head()
+
+
+# In[83]:
+
+
+df.drop(labels=['Title', 'Clothing ID'], axis = 1, inplace=True)
+
+
+# In[84]:
+
+
+df.head()
+
+
+# In[85]:
+
+
+df.isnull().sum()
+
+
+# In[86]:
+
+
+df.dropna(subset=['Review Text', 'Division Name'], inplace = True)
+
+
+# In[87]:
+
+
+df.isnull().sum()
+
+
+# In[88]:
+
+
+df.describe()
+
+
+# In[89]:
+
+
+' '.join(df['Review Text'].tolist())
+
+
+# ## Text Cleaning
+
+# In[90]:
+
+
+contractions = { 
+"ain't": "am not",
+"aren't": "are not",
+"can't": "cannot",
+"can't've": "cannot have",
+"'cause": "because",
+"could've": "could have",
+"couldn't": "could not",
+"couldn't've": "could not have",
+"didn't": "did not",
+"doesn't": "does not",
+"don't": "do not",
+"hadn't": "had not",
+"hadn't've": "had not have",
+"hasn't": "has not",
+"haven't": "have not",
+"he'd": "he would",
+"he'd've": "he would have",
+"he'll": "he will",
+"he'll've": "he will have",
+"he's": "he is",
+"how'd": "how did",
+"how'd'y": "how do you",
+"how'll": "how will",
+"how's": "how does",
+"i'd": "i would",
+"i'd've": "i would have",
+"i'll": "i will",
+"i'll've": "i will have",
+"i'm": "i am",
+"i've": "i have",
+"isn't": "is not",
+"it'd": "it would",
+"it'd've": "it would have",
+"it'll": "it will",
+"it'll've": "it will have",
+"it's": "it is",
+"let's": "let us",
+"ma'am": "madam",
+"mayn't": "may not",
+"might've": "might have",
+"mightn't": "might not",
+"mightn't've": "might not have",
+"must've": "must have",
+"mustn't": "must not",
+"mustn't've": "must not have",
+"needn't": "need not",
+"needn't've": "need not have",
+"o'clock": "of the clock",
+"oughtn't": "ought not",
+"oughtn't've": "ought not have",
+"shan't": "shall not",
+"sha'n't": "shall not",
+"shan't've": "shall not have",
+"she'd": "she would",
+"she'd've": "she would have",
+"she'll": "she will",
+"she'll've": "she will have",
+"she's": "she is",
+"should've": "should have",
+"shouldn't": "should not",
+"shouldn't've": "should not have",
+"so've": "so have",
+"so's": "so is",
+"that'd": "that would",
+"that'd've": "that would have",
+"that's": "that is",
+"there'd": "there would",
+"there'd've": "there would have",
+"there's": "there is",
+"they'd": "they would",
+"they'd've": "they would have",
+"they'll": "they will",
+"they'll've": "they will have",
+"they're": "they are",
+"they've": "they have",
+"to've": "to have",
+"wasn't": "was not",
+" u ": " you ",
+" ur ": " your ",
+" n ": " and "}
+
+
+# In[91]:
+
+
+def cont_to_exp(x):
+    if type(x) is str:
+        x = x.replace('\\', '')
+        for key in contractions:
+            value = contractions[key]
+            x = x.replace(key, value)
+        return x
+    else:
+        return x
+
+
+# In[92]:
+
+
+x = "i don't know today's date, I am 5'8\"" 
+
+
+# In[93]:
+
+
+print(cont_to_exp(x))
+
+
+# In[94]:
+
+
+get_ipython().run_cell_magic('time', '', "df['Review Text'] = df['Review Text'].apply(lambda x: cont_to_exp(x))")
+
+
+# In[95]:
+
+
+df.head()
+
+
+# In[96]:
+
+
+print(' '.join(df['Review Text'].tolist())[:1000])
+
+
+# ## Feature Engineering
+
+# In[97]:
+
+
+conda install -c conda-forge textblob 
+
+
+# In[98]:
+
+
+from textblob import TextBlob
+
+
+# In[99]:
+
+
+df.head()
+
+
+# In[100]:
+
+
+df['polarity'] = df['Review Text'].apply(lambda x: TextBlob(x).sentiment.polarity)
+
+
+# In[101]:
+
+
+df['review_len'] = df['Review Text'].apply(lambda x: len(x))
+
+
+# In[102]:
+
+
+df['word_count'] = df['Review Text'].apply(lambda x: len(x.split()))
+
+
+# In[103]:
+
+
+def get_avg_word_len(x):
+    words = x.split()
+    word_len = 0
+    for word in words:
+        word_len = word_len + len(word)
+        
+    return word_len/len(words)
+
+
+# In[104]:
+
+
+df['avg_word_len'] = df['Review Text'].apply(lambda x: get_avg_word_len(x))
+
+
+# In[105]:
+
+
+df.head()
+
+
+# ## Distribution of Sentiment Polarity
+
+# In[106]:
+
+
+df.head()
+
+
+# In[107]:
+
+
+df['polarity'].iplot(kind = 'hist', colors = 'red', bins = 50,
+                    xTitle = 'Polarity', yTitle = 'Count', title  = 'Sentiment Polarity Distribution')
+
+
+# ## Distribution of Reviews Rating and Reviewers Age
+
+# In[108]:
+
+
+df['Rating'].iplot(kind = 'hist', xTitle = 'Rating', yTitle = 'Count',
+                  title = 'Review Rating Distribution')
+
+
+# In[109]:
+
+
+df['Age'].iplot(kind = 'hist', bins = 40, xTitle = 'Age', yTitle = 'Count',
+               title = 'Reviewers Age Dist', colors = 'orange', linecolor = 'gray')
+
+
+# ## Distribution of Review Text Length and Word Length
+
+# In[110]:
+
+
+df['review_len'].iplot(kind = 'hist', xTitle = 'Review Len', yTitle = 'Count', title = 'Review Text Len Dist')
+
+
+# In[111]:
+
+
+df['word_count'].iplot(kind = 'hist', xTitle = 'Word Count', yTitle = 'Count', title = 'Word Count Distribution')
+
+
+# In[112]:
+
+
+df['avg_word_len'].iplot(kind = 'hist', xTitle = 'Avg Word Len', yTitle = 'Count', title = 'Review Text Avg Word Len Dist')
+
+
+# In[113]:
+
+
+df['word_count'].iplot(kind = 'hist', xTitle = 'Word Count', yTitle = 'Count', 
+                       title = 'Word Count Distribution')
+
+
+# ## Distribution of Department, Division, and Class
+
+# In[114]:
+
+
+df.head(1)
+
+
+# In[115]:
+
+
+df['Department Name'].value_counts()
+
+
+# In[116]:
+
+
+df.groupby('Department Name').count()
+
+
+# In[117]:
+
+
+df['Department Name'].value_counts().iplot(kind = 'bar', yTitle = 'Count', xTitle = 'Department',
+                                          title = "Bar Chart of Department's Name")
+
+
+# In[118]:
+
+
+df['Division Name'].value_counts().iplot(kind = 'bar', yTitle = 'Count', xTitle = 'Division',
+                                          title = "Bar Chart of Division's Name")
+
+
+# In[119]:
+
+
+df['Class Name'].value_counts().iplot(kind = 'bar', yTitle = 'Count', xTitle = 'Class',
+                                          title = "Bar Chart of Class's Name")
+
+
+# In[120]:
+
+
+get_ipython().system('pip install nltk')
+
+
+# In[121]:
+
+
+import nltk
+
+
+# In[122]:
+
+
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+
+
+# In[123]:
+
+
+print(str(df['Review Text']))
+
+
+# In[124]:
+
+
+blob = TextBlob(str(df['Review Text']))
+
+
+# In[125]:
+
+
+nltk.download('tagsets')
+
+
+# In[126]:
+
+
+print(nltk.help.upenn_tagset())
+
+
+# In[127]:
+
+
+pos_df = pd.DataFrame(blob.tags, columns = ['words', 'pos'])
+pos_df = pos_df['pos'].value_counts()
+pos_df
+
+
+# In[128]:
+
+
+pos_df.iplot(kind = 'bar')
+
+
+# ## Distribution of Sentiment Polarity of Reviews Based on Recommendations
+
+# In[129]:
+
+
+import plotly.express as px
+import plotly.graph_objects as go
+
+
+# In[130]:
+
+
+x1 = df[df['Recommended IND']==1]['polarity']
+x0 = df[df['Recommended IND']==0]['polarity']
+
+
+# In[131]:
+
+
+type(x1)
+
+
+# In[132]:
+
+
+trace0 = go.Histogram(x = x0, name = 'Not Recommended', opacity = 0.7)
+trace1 = go.Histogram(x = x1, name = 'Recommended', opacity = 0.7)
+
+
+# In[133]:
+
+
+data = [trace0, trace1]
+layout = go.Layout(barmode = 'overlay', title = 'Distribution of Sentiment Polarity of Reviews Based on the Recommendation')
+fig = go.Figure(data = data, layout = layout)
+
+iplot(fig)
+
+
+# ## Distribution of Ratings Based on the Recommendation
+
+# In[134]:
+
+
+x1 = df[df['Recommended IND']==1]['Rating']
+x0 = df[df['Recommended IND']==0]['Rating']
+
+
+# In[135]:
+
+
+type(x1)
+
+
+# In[136]:
+
+
+trace0 = go.Histogram(x = x0, name = 'Not Recommended', opacity = 0.7)
+trace1 = go.Histogram(x = x1, name = 'Recommended', opacity = 0.7)
+
+
+# In[137]:
+
+
+data = [trace0, trace1]
+layout = go.Layout(barmode = 'overlay', title = 'Distribution of Reviews Rating Based on the Recommendation')
+fig = go.Figure(data = data, layout = layout)
+
+iplot(fig)
+
+
+# In[138]:
+
+
+sns.jointplot(x = 'polarity', y = 'review_len', data = df, kind = 'kde')
+
+
+# In[139]:
+
+
+sns.jointplot(x = 'polarity', y = 'Age', data = df, kind = 'kde')
+
